@@ -1,0 +1,148 @@
+<html> 
+    <head> 
+        <meta charset = "utf-8"> 
+        <title>QUnit basic example</title> 
+        <link rel = "stylesheet" href = "https://code.jquery.com/qunit/qunit-1.22.0.css">
+        <script src = "https://code.jquery.com/qunit/qunit-2.18.2.js"></script>
+        <script type="text/javascript" src="../structures.js"></script>
+   </head> 
+   
+   <body> 
+        <div id = "qunit"></div> 
+        <div id = "qunit-fixture"></div>  
+        
+
+        <script> 
+            QUnit.test( "My First Test", function( assert ) { 
+                let ts = new TimeSeries();
+                var value = "1"; 
+                assert.equal( value, "1", "Value should be 1" ); 
+            }); 
+
+            QUnit.test( "Differential Equation Printing 1", function( assert ) { 
+                // Arrange
+                let equation = new SecondOrderDifferentialEquation(1,2,3);
+                var expected = "\\frac{d^2x}{dt^2}+2\\frac{dx}{dt}+3x = 0";
+                // Act
+                var actual = equation.print();
+
+                // Assert
+                assert.equal( actual, expected, "Value should be 1" ); 
+            }); 
+
+            QUnit.test( "Differential Equation Printing 2", function( assert ) { 
+                // Arrange
+                let equation = new SecondOrderDifferentialEquation(2,3,4);
+                var expected = "2\\frac{d^2x}{dt^2}+3\\frac{dx}{dt}+4x = 0";
+                // Act
+                var actual = equation.print();
+
+                // Assert
+                assert.equal( actual, expected, "Value should be 1" ); 
+            }); 
+
+            QUnit.test( "Differential Equation Printing 3", function( assert ) { 
+                // Arrange
+                let equation = new SecondOrderDifferentialEquation(-2,3,-4);
+                var expected = "-2\\frac{d^2x}{dt^2}+3\\frac{dx}{dt}-4x = 0";
+                // Act
+                var actual = equation.print();
+
+                // Assert
+                assert.equal( actual, expected, "Value should be 1" ); 
+            }); 
+
+            QUnit.test( "Differential Equation Printing 4", function( assert ) { 
+                // Arrange
+                let equation = new SecondOrderDifferentialEquation(0,3,-4);
+                var expected = "3\\frac{dx}{dt}-4x = 0";
+                // Act
+                var actual = equation.print();
+
+                // Assert
+                assert.equal( actual, expected, "Value should be 1" ); 
+            }); 
+
+            QUnit.test( "Differential Equation Printing 5", function( assert ) { 
+                // Arrange
+                let equation = new SecondOrderDifferentialEquation(0,0,-1);
+                var expected = "-x = 0";
+                // Act
+                var actual = equation.print();
+
+                // Assert
+                assert.equal( actual, expected, "Value should be 1" ); 
+            }); 
+
+            QUnit.test( "Differential Equation Printing 6", function( assert ) { 
+                // Arrange
+                let equation = new SecondOrderDifferentialEquation(1,1,1);
+                var expected = "\\frac{d^2x}{dt^2}+\\frac{dx}{dt}+x = 0";
+                // Act
+                var actual = equation.print();
+
+                // Assert
+                assert.equal( actual, expected, "Value should be 1" ); 
+            }); 
+
+            QUnit.test( "Root without imaginary component is not complex", function( assert ) { 
+                // Arrange
+                let root = new Root(1);
+                
+                // Assert
+                assert.false( root.is_complex(), "Should be false."); 
+            }); 
+
+            QUnit.test( "Root with imaginary component is complex", function( assert ) { 
+                // Arrange
+                let root = new Root(1, 1);
+                
+                // Assert
+                assert.true( root.is_complex(), "Should be false."); 
+            }); 
+
+            QUnit.test( "Real root prints correctly", function( assert ) { 
+                // Arrange
+                let root = new Root(3);
+                var expected = "3";
+
+                // Act
+                var actual = root.print();
+
+                // Assert
+                assert.equal( actual, expected, "Should be '3'."); 
+            }); 
+
+            QUnit.test( "Complex root prints correctly", function( assert ) { 
+                // Arrange
+                let root = new Root(3,-1);
+                var expected = "3-1i";
+
+                // Act
+                var actual = root.print();
+
+                // Assert
+                assert.equal( actual, expected, "Should be '3-1i'."); 
+            }); 
+
+            QUnit.test( "DistinctRealRootSolution prints correctly", function( assert ) { 
+                // Arrange
+                let root1 = new Root(2);
+                let root2 = new Root(-3.7712);
+                let solution = new DistinctRealRootSolution(root1, root2, -1, -7);
+                var expected = "3-1i";
+
+                // Act
+                var actual = solution.print();
+
+                // Assert
+                assert.equal( actual, expected, "Should be '3-1i'."); 
+            }); 
+
+      </script> 
+
+      
+
+      
+   </body> 
+</html>

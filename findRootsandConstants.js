@@ -1,3 +1,11 @@
+//class AnalyticSolution {
+//	constructor() {
+//
+//	}
+//	print();
+//}
+
+
 solution = function(dO) {
    dO = makeGrid(dO);
    dO = findRoots(dO);
