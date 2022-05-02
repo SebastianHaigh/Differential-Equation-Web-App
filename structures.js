@@ -1,9 +1,28 @@
-class AnalyticSolution {
+class SolutionFactory {
 	constructor() {}
 
-	print() {
-		return "x(t) = " + this.a + this.b + this.c;
+	new_solution(differential_equation, position, velocity) {
+		var roots = differential_equation.get_roots();
+		if (differential_equation.order() == 2) {
+			if (roots[0].is_complex()) {
+				return new ComplexRootSolution(roots[0], roots[1], position, velocity);
+			}
+
+			if (roots[0].re() == roots[1].re()) {
+				return new RepeatedRootSolution(roots[0], position, velocity);
+			} else {
+				return new DistinctRealRootSolution(roots[0], roots[1], position, velocity);
+			}
+		} else if (differential_equation.order() == 1) {
+			return new FirstOrderSolution(roots[0], position, velocity);
+		} else {
+			return new ZerothOrderSolution();
+		}
 	}
+}
+
+class AnalyticSolution {
+	constructor() {}
 
 	print_exponential(constant_multiplier, exponent_multiplier, leading) {
 		var output = "";
@@ -21,17 +40,71 @@ class AnalyticSolution {
 		return output;
 	}
 
+	print_cosine_term(constant_multiplier, frequency, leading = true) {
+		var output = "";
+
+		if (constant_multiplier.is_zero()) {
+			return output;
+		}
+
+		output += constant_multiplier.print(leading);
+
+		if (!frequency.is_zero()) {
+			output += this.print_cosine(frequency);
+		}
+
+		return output;
+	}
+
+	print_cosine(frequency) {
+		return "\\cos(" + frequency.print() + "t)";
+	}
+
+	print_sine_term(constant_multiplier, frequency, leading = true) {
+		var output = "";
+
+		if (constant_multiplier.is_zero() || frequency.is_zero()) {
+			return output;
+		}
+
+		output += constant_multiplier.print(leading);
+
+		output += this.print_sine(frequency);
+
+		return output;
+	}
+
+	print_sine(frequency) {
+		return "\\sin(" + frequency.print() + "t)";
+	}
 }
 
 class RepeatedRootSolution extends AnalyticSolution {
 	constructor(root, position, velocity) {
-		this.constant_a = 0;
-		this.constant_b = 0;
+		super();
+		this.root = root;
+		this.constant_a = new Constant( position );
+		this.constant_b = new Constant( velocity - (position * root.re()));
 		this.type = "Repeated Roots";
 	}
 
-	print() { return this.type; }
-	time_series() {return new TimeSeries(); }
+	print() { 
+		var output = "x(t) = "
+		output += super.print_exponential(this.constant_a, this.root, true);
+		output += super.print_exponential(this.constant_b, this.root, false) + "t";
+		return output
+	}
+
+	time_series(dt, num_points) {
+		var output = [{t: 0, x: 0}];
+		for (let i = 0; i < num_points; i++) {
+			var point = dt * i;
+			var value = Math.exp(this.root.re()*point)*(this.constant_b.value*point + this.constant_a.value);
+			output[i] = {t: point, x: value};
+		}
+		
+		return output;
+	}
 }
 
 class DistinctRealRootSolution extends AnalyticSolution {
@@ -45,35 +118,120 @@ class DistinctRealRootSolution extends AnalyticSolution {
 	}
 
 	print() { 
-		var s = "x(t) = ";
-		s += super.print_exponential(this.constant_a, this.root1, true);
-		s += super.print_exponential(this.constant_b, this.root2, false);
+		var output = "x(t) = ";
+		output += super.print_exponential(this.constant_a, this.root1, true);
+		output += super.print_exponential(this.constant_b, this.root2, false);
 
-		return s;
+		return output;
 	}
 
-	time_series() {return new TimeSeries(); }
+	time_series(dt, num_points) {
+		var output = [{t: 0, x: 0}];
+		for (let i = 0; i < num_points; i++) {
+			var point = dt * i;
+			var value = this.constant_a.value*Math.exp(this.root1.re()*point) + this.constant_b.value*Math.exp(this.root2.re()*point);
+			output[i] = {t: point, x: value};
+		}
+		
+		return output;
+	}
 }
 
+/**
+ * Solution for 2nd order differential equations of the form ax'' + bx' + cx = 0.
+ * 
+ * 
+ *  
+ * */
 class ComplexRootSolution extends AnalyticSolution {
 	constructor(root1, root2, position, velocity) {
-		this.constant_a = 0;
-		this.constant_b = 0;
+		super();
+		this.root1 = root1;
+		this.root2 = root2;
+		this.constant_a = new Constant (position);
+		this.constant_b = new Constant ( (velocity - (position*root1.re()) ) / (Math.abs(root1.im())) );
 		this.type = "Complex Roots";
 	}
 
-	print() { return this.type; }
-	time_series() {return new TimeSeries(); }
-}
-
-class FirstOrderSolution extends AnalyticSolution {
-	constructor(root, position, velocity) {
-		this.constant_a = 0;
-		this.type = "First Order";
+	/**
+	 * print the equation of the solution to LaTeX.
+	 * 
+	 * @returns A string containing equation in LaTeX form.
+	 */
+	print() { 
+		var output = "x(t) = ";
+		output += super.print_exponential(new Constant(1), this.root1);
+		output += "(" + super.print_cosine_term(this.constant_a, this.root2.imaginary);
+		output += super.print_sine_term(this.constant_b, this.root2.imaginary, false) + ")";
+		return output;
 	}
 
-	print() { return this.type; }
-	time_series() {return new TimeSeries(); }
+	time_series(dt, num_points) {
+		var output = [{t: 0, x: 0}];
+		for (let i = 0; i < num_points; i++) {
+			var point = dt * i;
+			var ex = Math.exp(this.root1.re()*point);
+			var cos = Math.cos(this.root1.im()*point);
+			var sin = Math.sin(this.root1.im()*point);
+			var value = ex*(this.constant_a.value*cos + this.constant_b.value*sin);
+			output[i] = {t: point, x: value};
+		}
+		
+		return output;
+	}
+}
+
+/**
+ * Solutions for equations of the form ax' + bx = 0.
+ */
+class FirstOrderSolution extends AnalyticSolution {
+	constructor(root, position) {
+		super();
+		this.constant_a = new Constant(position);
+		this.root = root;
+	}
+
+	print() { 
+		var output = "x(t) = ";
+		if (this.constant_a.is_zero()) {
+			output += "0";
+		} else {
+			output += super.print_exponential(this.constant_a, this.root);
+		}
+		return output; 
+	}
+
+	time_series(dt, num_points) {
+		var output = [{t: 0, x: 0}];
+		for (let i = 0; i < num_points; i++) {
+			var point = dt * i;
+			var value = this.constant_a.value*Math.exp(this.root.re()*point);
+			output[i] = {t: point, x: value};
+		}
+		
+		return output;
+	}
+}
+
+/**
+ * Solutions for equations of the form ax = 0.
+ */
+class ZerothOrderSolution extends AnalyticSolution {
+	constructor() {
+		super();
+		this.constant_a = new Constant(0);
+	}
+
+	time_series(dt, num_points) {
+		var output = [{t: 0, x: 0}];
+		for (let i = 0; i < num_points; i++) {
+			var point = dt * i;
+			
+			output[i] = {t: point, x: 0};
+		}
+		
+		return output;
+	}
 }
 
 function solve(differential_equation, initial_conditions) {
@@ -156,19 +314,11 @@ class DifferentialEquationTerm {
 		this.derivative = new Derivative(order);
 	}
 
-	print_signed() {
-		if (this.constant.value == 1 || this.constant.value == -1) {
-			return this.constant.print_sign() + this.derivative.print();
+	print(leading = true) {
+		if (this.constant.is_zero()) {
+			return "";
 		} else {
-			return this.constant.print_signed() + this.derivative.print();
-		}
-	}
-
-	print_unsigned() {
-		if (this.constant.value == 1 || this.constant.value == -1) {
-			return this.derivative.print();
-		} else {
-			return this.constant.print_unsigned() + this.derivative.print();
+			return this.constant.print(leading) + this.derivative.print();
 		}
 	}
 
@@ -191,50 +341,48 @@ class DifferentialEquationTerm {
  * 
  * */ 
 
-class SecondOrderDifferentialEquation {
-	constructor(a, b, c, initial_conditions) {
-		this.terms = [new DifferentialEquationTerm(a, 2), new DifferentialEquationTerm(b, 1), new DifferentialEquationTerm(c, 0)];
-		var bob = b*b - 4*a*c;
-		if (bob == 0) {
-			var root_value = -b/(2*a);
-			this.root1 = new Root(root_value);
-			this.root2 = new Root(root_value);
-		} else if (bob < 0) {
-			var real_value = -b/(2*a);
-			var imaginary_value = Math.sqrt(Math.abs(bob))/(2*a);
-			this.root1 = new Root(real_value, imaginary_value);
-			this.root2 = new Root(real_value, (-1)*imaginary_value);
-		} else if (bob > 0){
-			var real_value1 = (- b - Math.sqrt(bob)) / (2*a);
-			var real_value2 = (- b + Math.sqrt(bob)) / (2*a);
-			this.root1 = new Root(real_value1);
-			this.root2 = new Root(real_value2);
-		} 
+class DifferentialEquation {
+	constructor(terms) {
+		this.terms = terms;
 	}
 
 	print() {
-		var s = "";
-		var first_term = true;
-		for(let i = 0; i < this.terms.length; i++) {
-
-			// If the first term is negative then the sign of the constant 
-			// should be printed:
-			if (this.terms[i].is_negative() && first_term) {
-				s += this.terms[i].print_signed();
-				first_term = false;
-
-			// If the first term is positive then the sign of the constant 
-			// should not be printed:
-			} else if (this.terms[i].is_positive() && first_term) {
-				s += this.terms[i].print_unsigned();
-				first_term = false;
-
-			// For all other terms than the first the sign should be printed:
-			} else if (!first_term) {
-				s += this.terms[i].print_signed();
+		var output = "";
+		var is_first_term = true;
+		for (let i = 0; i < this.terms.length; i++) {
+			if (!this.terms[i].is_zero() && is_first_term) {
+				output += this.terms[i].print();
+				is_first_term = false;
+			} else if (!is_first_term) {
+				output += this.terms[i].print(false);
 			}
 		}
-		return s + " = 0";
+		return output + " = 0";
+	}
+
+	order() { return this.terms.length - 1; }
+
+}
+
+class SecondOrderDifferentialEquation extends DifferentialEquation {
+	constructor(a, b, c) {
+		super([new DifferentialEquationTerm(a, 2), new DifferentialEquationTerm(b, 1), new DifferentialEquationTerm(c, 0)]);
+		var discriminant = b*b - 4*a*c;
+		if (discriminant == 0) {
+			var root_value = -b/(2*a);
+			this.root1 = new Root(root_value);
+			this.root2 = new Root(root_value);
+		} else if (discriminant < 0) {
+			var real_value = -b/(2*a);
+			var imaginary_value = Math.sqrt(Math.abs(discriminant))/(2*a);
+			this.root1 = new Root(real_value, imaginary_value);
+			this.root2 = new Root(real_value, (-1)*imaginary_value);
+		} else if (discriminant > 0){
+			var real_value1 = (- b - Math.sqrt(discriminant)) / (2*a);
+			var real_value2 = (- b + Math.sqrt(discriminant)) / (2*a);
+			this.root1 = new Root(real_value1);
+			this.root2 = new Root(real_value2);
+		} 
 	}
 
 	get_roots() {
@@ -243,26 +391,23 @@ class SecondOrderDifferentialEquation {
 
 }
 
-class FirstOrderDifferentialEquation {
-	constructor(a, b, initial_conditions) {
-		this.terms = [new DifferentialEquationTerm(a, 1), new DifferentialEquationTerm(b, 0)];
-		var bob = b*b - 4*a*c;
-		if (bob == 0) {
-			var root_value = -b/(2*a);
-			this.root1 = new Root(root_value);
-			this.root2 = new Root(root_value);
-		} else if (bob < 0) {
-			var real_value = -b/(2*a);
-			var imaginary_value = Math.sqrt(Math.abs(bob))/(2*a);
-			this.root1 = new Root(real_value, imaginary_value);
-			this.root2 = new Root(real_value, (-1)*imaginary_value);
-		} else if (bob > 0){
-			var real_value1 = (- b - Math.sqrt(bob)) / (2*a);
-			var real_value2 = (- b + Math.sqrt(bob)) / (2*a);
-			this.root1 = new Root(real_value1);
-			this.root2 = new Root(real_value2);
-		} 
+class FirstOrderDifferentialEquation extends DifferentialEquation {
+	constructor(a, b) {
+		super([new DifferentialEquationTerm(a, 1), new DifferentialEquationTerm(b, 0)]);
+		var root_value = b/Math.abs(a);
+		this.root = new Root(root_value);
 	}
+
+	get_roots() { return [this.root]; }
+}
+
+class ZerothOrderDifferentialEquation extends DifferentialEquation {
+	constructor(a) {
+		super([new DifferentialEquationTerm(a, 0)]);
+		this.root = new Root(0);
+	}
+
+	get_roots() { return [this.root]; }
 }
 
 /**
@@ -276,7 +421,9 @@ class DifferentialEquationFactory {
 	constructor() {}
 
 	create_differential_equation(a, b, c) {
-		if (a == 0) {
+		if (a == 0 && b == 0) {
+			return new ZerothOrderDifferentialEquation(c);
+		} else if (a == 0) {
 			return new FirstOrderDifferentialEquation(b, c);
 		} else {
 			return new SecondOrderDifferentialEquation(a, b, c);
