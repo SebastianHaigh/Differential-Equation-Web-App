@@ -8,11 +8,14 @@ var yMaxAbs = Math.abs(yMax);
 var dMin, dMax;
 
 if (yMinAbs > yMax) {
-	dMin = yMin;
-	dMax = yMinAbs;
+	dMin = yMin - 2;
+	dMax = yMinAbs +2;
+} else if (yMax == 0 && yMin == 0) {
+	dMin = -2;
+	dMax = 2;
 } else {
-	dMin = yMax*(-1);
-	dMax = yMax;
+	dMin = yMax*(-1) - 2;
+	dMax = yMax +2;
 }
 	
 
@@ -122,7 +125,7 @@ function ball(data) {
 	
 	refreshIntervalId = setInterval(function() {	  
 		var p = data.shift();
-		var v = p.x*50+600;
+		var v = (p.x*50) + 600;
 		v = Math.floor(v);
         $("#interval").text(data.length);
 		sum = sum + data.length;
@@ -146,7 +149,7 @@ function poleplot(dataset) {
 	
 			//Create scale functions
 	var pxScale = d3.scale.linear()
-		.domain([-10, 10])
+		.domain([-5, 5])
 		.range([padding, w - padding * 2]);
 
 	var pyScale = d3.scale.linear()
@@ -180,7 +183,7 @@ function poleplot(dataset) {
 		.data(dataset)
 		.enter()
 		.append("circle")
-		.attr("stroke", "#45FF00")
+		.attr("stroke", "#000000")
 		.attr("fill", "#45FF00")
 		.attr("cx", function(d) { return pxScale(d.Re); })
 		.attr("cy", function(d) { return pyScale(d.Im); })

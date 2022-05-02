@@ -1,7 +1,7 @@
-const add = require('../add.js');
 
-QUnit.module('add');
 
 QUnit.test('add two numbers', assert => {
-  assert.equal(add(1, 1), 2, '1 + 1 = 2');
+  let ts = new TimeSeries();
+  ts.push(1,3);
+  assert.equal(ts.at(0).data, 3, '1 + 1 = 2');
 });
