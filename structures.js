@@ -463,9 +463,9 @@ class Root {
 
 	print() {
 		if (this.is_complex()) {
-			return "" + this.real.value + this.imaginary.value + "i";
+			return "" + this.real.print(false) + this.imaginary.print(false) + "i";
 		} else {
-			return "" + this.real.value;
+			return "" + this.real.print(false);
 		}
 	}
 }

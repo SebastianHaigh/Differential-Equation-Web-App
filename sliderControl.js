@@ -141,22 +141,8 @@ function updateAll(data_object) {
 };
 
 function updateRootDisplay(root1, root2) {
-	$("#sigma1").text(root1.print_real());
-	$("#sigma2").text(root2.print_real());
-
-	$("#omega1").text(Math.abs(root1.im()).toFixed(2));
-	$("#omega2").text(Math.abs(root2.im()).toFixed(2));
-	if (root1.im() < 0) {
-		$("#sign1").text("-");
-	} else {
-		$("#sign1").text("+");
-	}
-  
-	if (root2.im() < 0) {
-		$("#sign2").text("-");
-	} else {
-		$("#sign2").text("+");
-	}
+	$("#sigma1").text(root1.print());
+	$("#sigma2").text(root2.print());
 };
 
 // Interval for updating MathJax
