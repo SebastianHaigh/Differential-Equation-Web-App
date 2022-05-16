@@ -1,6 +1,13 @@
 class SolutionFactory {
 	constructor() {}
 
+	/**
+	 * 
+	 * @param {DifferentialEquation} differential_equation 
+	 * @param {number} position 
+	 * @param {number} velocity 
+	 * @returns {AnalyticSolution}
+	 */
 	new_solution(differential_equation, position, velocity) {
 		var roots = differential_equation.get_roots();
 		if (differential_equation.order() == 2) {
@@ -24,11 +31,19 @@ class SolutionFactory {
 class AnalyticSolution {
 	constructor() {}
 
+	/**
+	 * Print an exponential of the form Ae^{bt}
+	 * 
+	 * @param {MultiplicativeConstant} constant_multiplier 
+	 * @param {MultiplicativeConstant} exponent_multiplier 
+	 * @param {bool} leading 
+	 * @returns {string}
+	 */
 	print_exponential(constant_multiplier, exponent_multiplier, leading) {
 		var output = "";
 
 		if (constant_multiplier.is_zero()) {
-			return output;
+			return "0";
 		}
 
 		output += constant_multiplier.print(leading);
@@ -40,42 +55,62 @@ class AnalyticSolution {
 		return output;
 	}
 
+	/**
+	 * Print a cosine term of the form A\\cos(bt)
+	 * 
+	 * @param {MultiplicativeConstant} constant_multiplier 
+	 * @param {MultiplicativeConstant} frequency 
+	 * @param {boolean} leading 
+	 * @returns 
+	 */
 	print_cosine_term(constant_multiplier, frequency, leading = true) {
 		var output = "";
 
 		if (constant_multiplier.is_zero()) {
-			return output;
+			return "0";
+		} else if (frequency.is_zero()) {
+			return constant_multiplier.print(leading);
+		} else {
+			return constant_multiplier.print(leading) + this.print_cosine(frequency);
 		}
-
-		output += constant_multiplier.print(leading);
-
-		if (!frequency.is_zero()) {
-			output += this.print_cosine(frequency);
-		}
-
-		return output;
 	}
 
 	print_cosine(frequency) {
-		return "\\cos(" + frequency.print() + "t)";
+		var freq = frequency.print_unsigned();
+		if (freq == "1") {
+			return "\\cos(t)"
+		} else if (freq == "0") {
+			return "1";
+		} else {
+			return "\\cos(" + freq + "t)";
+		}
 	}
 
+	/**
+	 * Print a sine term of the form A\\sin(bt)
+	 * 
+	 * @param {MultiplicativeConstant} constant_multiplier 
+	 * @param {MultiplicativeConstant} frequency 
+	 * @param {boolean} leading 
+	 * @returns 
+	 */
 	print_sine_term(constant_multiplier, frequency, leading = true) {
-		var output = "";
-
 		if (constant_multiplier.is_zero() || frequency.is_zero()) {
-			return output;
+			return "0";
 		}
-
-		output += constant_multiplier.print(leading);
-
-		output += this.print_sine(frequency);
-
-		return output;
+		return constant_multiplier.print(leading) + this.print_sine(frequency);
 	}
 
 	print_sine(frequency) {
-		return "\\sin(" + frequency.print() + "t)";
+		var freq = frequency.print_unsigned();
+		if (freq == "1") {
+			return "\\sin(t)"
+		} else if (freq == "0") {
+			return "0";
+		} else {
+			return "\\sin(" + freq + "t)";
+		}
+		
 	}
 }
 
@@ -90,9 +125,18 @@ class RepeatedRootSolution extends AnalyticSolution {
 
 	print() { 
 		var output = "x(t) = "
-		output += super.print_exponential(this.constant_a, this.root, true);
-		output += super.print_exponential(this.constant_b, this.root, false) + "t";
-		return output
+		
+		if (this.constant_a.is_zero() && this.constant_b.is_zero()) {
+			return output + "0";
+		} else if (!this.constant_a.is_zero() && this.constant_b.is_zero()) {
+			return output + super.print_exponential(this.constant_a, this.root, true);
+		} else if (this.constant_a.is_zero() && !this.constant_b.is_zero()) {
+			output += this.constant_b.print() + "t";
+			return output + super.print_exponential(new MultiplicativeConstant(1), this.root, true);
+		} else {
+			output += super.print_exponential(new MultiplicativeConstant(1), this.root, true);
+			return output + "(" + this.constant_a.print() + this.constant_b.print(false) + "t)";
+		}
 	}
 
 	time_series(dt, num_points) {
@@ -138,12 +182,19 @@ class DistinctRealRootSolution extends AnalyticSolution {
 }
 
 /**
- * Solution for 2nd order differential equations of the form ax'' + bx' + cx = 0.
+ * Solution for 2nd order differential equations of the form ax''(t) + bx'(t) + cx(t) = 0.
  * 
- * 
- *  
  * */
 class ComplexRootSolution extends AnalyticSolution {
+
+	/**
+	 * Constructs an instance of ComplexRootSolution
+	 * 
+	 * @param {Root} root1 
+	 * @param {Root} root2 
+	 * @param {number} position 
+	 * @param {number} velocity 
+	 */
 	constructor(root1, root2, position, velocity) {
 		super();
 		this.root1 = root1;
@@ -156,13 +207,37 @@ class ComplexRootSolution extends AnalyticSolution {
 	/**
 	 * print the equation of the solution to LaTeX.
 	 * 
-	 * @returns A string containing equation in LaTeX form.
+	 * @returns {string} A string containing the equation in LaTeX form.
 	 */
 	print() { 
 		var output = "x(t) = ";
-		output += super.print_exponential(new Constant(1), this.root1);
-		output += "(" + super.print_cosine_term(this.constant_a, this.root2.imaginary);
-		output += super.print_sine_term(this.constant_b, this.root2.imaginary, false) + ")";
+
+		var cos_term = super.print_cosine_term(this.constant_a, this.root2.imaginary);
+		var sine_term = super.print_sine_term(this.constant_b, this.root2.imaginary);
+		if (cos_term != "0" && sine_term == "0") {
+			output += super.print_exponential(this.constant_a, this.root1);
+			output += super.print_cosine_term(new MultiplicativeConstant(1), this.root2.imaginary);
+		}
+
+		if (cos_term == "0" && sine_term != "0") {
+			output += super.print_exponential(this.constant_b, this.root1);
+			output += super.print_sine_term(new MultiplicativeConstant(1), this.root2.imaginary);
+		} 
+		
+		if (cos_term != "0" && sine_term != "0" && !this.root1.pure_imaginary()) {
+			output += super.print_exponential(new MultiplicativeConstant(1), this.root1);
+			output += "(" + super.print_cosine_term(this.constant_a, this.root2.imaginary);
+			output += super.print_sine_term(this.constant_b, this.root2.imaginary, false) + ")";
+		}
+
+		if (cos_term != "0" && sine_term != "0" && this.root1.pure_imaginary()) {
+			output += super.print_cosine_term(this.constant_a, this.root2.imaginary);
+			output += super.print_sine_term(this.constant_b, this.root2.imaginary, false);
+		}
+
+		if (cos_term == "0" && sine_term == "0") {
+			output += "0";
+		}
 		return output;
 	}
 
@@ -187,7 +262,7 @@ class ComplexRootSolution extends AnalyticSolution {
 class FirstOrderSolution extends AnalyticSolution {
 	constructor(root, position) {
 		super();
-		this.constant_a = new Constant(position);
+		this.constant_a = new MultiplicativeConstant(position);
 		this.root = root;
 	}
 
@@ -219,7 +294,10 @@ class FirstOrderSolution extends AnalyticSolution {
 class ZerothOrderSolution extends AnalyticSolution {
 	constructor() {
 		super();
-		this.constant_a = new Constant(0);
+	}
+
+	print() { 
+		return "x(t) = 0";
 	}
 
 	time_series(dt, num_points) {
@@ -305,6 +383,80 @@ class Constant {
 
 	is_zero() {
 		return this.value == 0;
+	}
+
+	is_unity() {
+		return Math.abs(this.value) == 1;
+	}
+}
+
+
+/**
+ * A class to hold constants that multiplies variables.
+ */
+ class MultiplicativeConstant extends Constant {
+	constructor(value) {
+		super(value);
+	}
+
+	/**
+	 * Prints a string of LaTeX representing the constant.
+	 * 
+	 * If the constant value is one then the numeric value of the constant is 
+	 * omitted and only the sign is printed ("+" or "-"). If the value is 
+	 * leading, the sign of the constant will only be printed if it is negative. 
+	 * 
+	 * @param {bool} leading 
+	 * @returns {string}
+	 */
+	print(leading = true) {
+		var output = "";
+
+		if (leading && super.is_negative() || !leading) {
+			output += super.print_sign();
+		}
+
+		if (!super.is_unity()) {
+			output += super.print_unsigned();
+		}
+
+		return output;
+	}
+}
+
+
+/**
+ * A class to hold constants that are added to variables
+ */
+class AdditiveConstant extends Constant {
+	constructor(value) {
+		super(value);
+	}
+
+	/**
+	 * Prints a string of LaTeX representing the constant.
+	 * 
+	 * If the constant value is zero then this will always an empty string (""). 
+	 * If the value is leading, the sign of the constant will only be printed if 
+	 * it is negative. 
+	 * 
+	 * @param {bool} leading 
+	 * @returns {string}
+	 */
+	print(leading = true) {
+		var output = "";
+
+		if (super.is_zero()) {
+			return "";
+		}
+
+		if (leading && super.is_negative() || !leading) {
+			output += super.print_sign();
+		}
+		
+		output += super.print_unsigned();
+
+		return output;
 	}
 }
 
@@ -445,6 +597,11 @@ class Root {
 		this.imaginary = new Constant(im);;
 	}
 
+	/**
+	 * Returns the numeric value of the real part of the number.
+	 * 
+	 * @returns {number}
+	 */
 	re() {
 		return this.real.value;
 	}
@@ -453,14 +610,29 @@ class Root {
 		return this.imaginary.value;
 	}
 
+	/**
+	 * Returns true if this root has a non-zero imaginary part.
+	 * 
+	 * @returns {boolean}
+	 */
 	is_complex() {
 		return !this.imaginary.is_zero();
+	}
+
+	/**
+	 * Returns true if this root is complex and with zero real part.
+	 * 
+	 * @returns {boolean}
+	 */
+	pure_imaginary() {
+		return this.is_complex && this.real.is_zero();	
 	}
 
 	print_real(leading = true) {
 		return this.real.print(leading);
 	}
 
+	
 	print() {
 		if (this.is_complex()) {
 			return "" + this.real.print(false) + this.imaginary.print(false) + "i";
@@ -470,21 +642,3 @@ class Root {
 	}
 }
 
-
-class TimeSeries {
-	constructor() {
-		this.series = [];
-	}
-
-	push(time, data) { this.series.push({time: time, data: data}); }
-
-	at(i) { 
-		if (i < this.length()) {
-			return this.series[i]; 
-		} else {
-			return {time: -1, data: -1};
-		}
-	}
-
-	length() { return this.series.length; }
-}

@@ -66,8 +66,8 @@ QUnit.test( "Constant Test: Integer constant prints as integer.", function( asse
 
 QUnit.test( "AnalyticSolution Test: Printing cosine of 0.", function( assert ) { 
     // Arrange
-    let constant = new Constant(2);
-    let frequency = new Constant(0);
+    let constant = new MultiplicativeConstant(2);
+    let frequency = new MultiplicativeConstant(0);
     let solution = new AnalyticSolution();
 
     // Act
@@ -100,7 +100,7 @@ QUnit.test( "AnalyticSolution Test: Printing cosine term with multiplier of zero
     var value = solution.print_cosine_term(constant, frequency, false);
 
     // Assert
-    assert.equal( value, "", "Value should be empty string" ); 
+    assert.equal( value, "0", "Value should be 0" ); 
 }); 
 
 QUnit.test( "AnalyticSolution Test: Printing leading cosine term with unity amplitude and frequency", function( assert ) { 
@@ -127,7 +127,7 @@ QUnit.test( "AnalyticSolution Test: Printing sine of 0.", function( assert ) {
     var value = solution.print_sine_term(constant, frequency);
 
     // Assert
-    assert.equal( value, "", "Value should be empty string." ); 
+    assert.equal( value, "0", "Value should be 0." ); 
 }); 
 
 QUnit.test( "AnalyticSolution Test: Printing non leading sine of 0.", function( assert ) { 
@@ -140,7 +140,7 @@ QUnit.test( "AnalyticSolution Test: Printing non leading sine of 0.", function( 
     var value = solution.print_sine_term(constant, frequency, false);
 
     // Assert
-    assert.equal( value, "", "Value should be empty string." ); 
+    assert.equal( value, "0", "Value should be 0." ); 
 }); 
 
 QUnit.test( "AnalyticSolution Test: Printing sine term with multiplier of zero.", function( assert ) { 
@@ -153,34 +153,34 @@ QUnit.test( "AnalyticSolution Test: Printing sine term with multiplier of zero."
     var value = solution.print_sine_term(constant, frequency, false);
 
     // Assert
-    assert.equal( value, "", "Value should be empty string" ); 
+    assert.equal( value, "0", "Value should be 0" ); 
 }); 
 
 QUnit.test( "AnalyticSolution Test: Printing leading sine term with unity amplitude and frequency", function( assert ) { 
     // Arrange
-    let constant = new Constant(1);
-    let frequency = new Constant(1);
+    let constant = new MultiplicativeConstant(1);
+    let frequency = new MultiplicativeConstant(1);
     let solution = new AnalyticSolution();
 
     // Act
     var value = solution.print_sine_term(constant, frequency);
 
     // Assert
-    assert.equal( value, "\\sin(t)", "Value should be \\cos(t)" ); 
+    assert.equal( value, "\\sin(t)", "Value should be \\sin(t)" ); 
 }); 
 
 
 QUnit.test( "ComplexRootSolution Test: Printing leading sine term with unity amplitude and frequency", function( assert ) { 
     // Arrange
-    let root1 = new Root(1.23, 2);
-    let root2 = new Root(1.23, -2);
-    let solution = new ComplexRootSolution(root1, root2, 10, 6);
+    let root1 = new Root(0, 1);
+    let root2 = new Root(0, -1);
+    let solution = new ComplexRootSolution(root1, root2, 0, 1);
 
     // Act
     var value = solution.print();
 
     // Assert
-    assert.equal( value, "\\sin(t)", "Value should be \\cos(t)" ); 
+    assert.equal( value, "x(t) = \\sin(t)", "Value should be \\cos(t)" ); 
 }); 
 
 
@@ -190,7 +190,7 @@ QUnit.test( "ZerothOrderSolutionTest", function( assert ) {
     let factory = new SolutionFactory();
 
     // Act
-    var solution = factory.new_solution(de, 0, 0);
+    let solution = factory.new_solution(de, 0, 0);
 
     // Assert
     assert.equal( solution.print(), "x(t) = 0", "Should print x(t) = 0" ); 
@@ -220,7 +220,7 @@ QUnit.test( "Solution Time Series", function( assert ) {
     var time_series = solution.time_series(0.1, 1000);
 
     // Assert
-    assert.equal( solution.print(), "x(t) = 0", "Should print x(t) = 0" ); 
+    assert.equal( solution.print(), "x(t) = e^{-0.50t}(2\\cos(3.12t)+0.32\\sin(3.12t))", "Should print x(t) = e^{-0.50t}(2\\cos(3.12t)+0.32\\sin(3.12t))" ); 
 }); 
 
 QUnit.test( "Differential Equation with only second order term.", function( assert ) { 
@@ -234,5 +234,5 @@ QUnit.test( "Differential Equation with only second order term.", function( asse
     var time_series = solution.time_series(0.1, 1000);
 
     // Assert
-    assert.equal( solution.print(), "x(t) = 0", "Should print x(t) = 0" ); 
+    assert.equal( solution.print(), "x(t) = 2", "Should print x(t) = 2" ); 
 }); 

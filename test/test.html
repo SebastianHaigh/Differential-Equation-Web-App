@@ -16,11 +16,6 @@
         <script type="text/javascript" src = "differential_equation_test.js"></script>
 
         <script> 
-            QUnit.test( "My First Test", function( assert ) { 
-                let ts = new TimeSeries();
-                var value = "1"; 
-                assert.equal( value, "1", "Value should be 1" ); 
-            }); 
 
             QUnit.test( "Differential Equation Printing 1", function( assert ) { 
                 // Arrange
@@ -107,7 +102,7 @@
             QUnit.test( "Real root prints correctly", function( assert ) { 
                 // Arrange
                 let root = new Root(3);
-                var expected = "3";
+                var expected = "+3";
 
                 // Act
                 var actual = root.print();
@@ -119,7 +114,7 @@
             QUnit.test( "Complex root prints correctly", function( assert ) { 
                 // Arrange
                 let root = new Root(3,-1);
-                var expected = "3-1i";
+                var expected = "+3-i";
 
                 // Act
                 var actual = root.print();
@@ -133,13 +128,12 @@
                 let root1 = new Root(2);
                 let root2 = new Root(-3.7712);
                 let solution = new DistinctRealRootSolution(root1, root2, -1, -7);
-                var expected = "3-1i";
-
+                var expected = "x(t) = -1.87e^{2t}+0.87e^{-3.77t}"
                 // Act
                 var actual = solution.print();
 
                 // Assert
-                assert.equal( actual, expected, "Should be '3-1i'."); 
+                assert.equal( actual, expected, "Should be x(t) = -1.87e^{2t}+0.87e^{-3.77t}."); 
             }); 
 
       </script> 

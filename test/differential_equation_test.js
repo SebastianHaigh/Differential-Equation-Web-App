@@ -46,28 +46,77 @@ QUnit.test( "DifferentialEquationFactory.", function( assert ) {
 }); 
 
 
-QUnit.test( "OK.", function( assert ) { 
+QUnit.test( "Solution Tests: Complex root with zero cosine term and non-zero sine term.", function( assert ) { 
     // Arrange
-    var dataObject = {
-		type: 0,
-		roots: [{Re: 0, Im: 0}],
-		root1: {Re: 0, Im: 0}, 
-		root2: {Re: 0, Im: 0}, 
-		diffEqconts: {a: 1, b: 2, c: 3},
-		intCon: {t: 0, x: 1, xdash: 1},
-		solConstants: {A: 0, B: 0}, 
-		timeSeries: [{t: 0, x: 0}],
-		stepResponse: [{t: 0, x: 0}],
-		differential_equation: 0,
-		solution: 0};
-    let equation_factory = new DifferentialEquationFactory();
-    let solution_factory = new SolutionFactory();
-
-
+    let root1 = new Root(-0.25, 1.1);
+    let root2 = new Root(-0.25, -1.1);
+    var position = 0;
+    var velocity = 2;
+    let solution = new ComplexRootSolution(root1, root2, position, velocity);
+    var expected = "x(t) = 1.82e^{-0.25t}\\sin(1.10t)"
     // Act
-    var dO = solution(dataObject, equation_factory, solution_factory);
+    var actual = solution.print();
 
     // Assert
-    assert.equal( dO.differential_equation, 2, "Value should be -x." ); 
+    assert.equal(actual, expected, "Value should be -x." ); 
+}); 
+
+QUnit.test( "Solution Tests: Complex root with non-zero cosine term and zero sine term.", function( assert ) { 
+    // Arrange
+    let root1 = new Root(2, 1.1);
+    let root2 = new Root(2, -1.1);
+    var position = 2;
+    var velocity = 4;
+    let solution = new ComplexRootSolution(root1, root2, position, velocity);
+    var expected = "x(t) = 2e^{2t}\\cos(1.10t)"
+    // Act
+    var actual = solution.print();
+
+    // Assert
+    assert.equal(actual, expected, "Value should be -x." ); 
+}); 
+
+QUnit.test( "Solution Tests: Complex root with zero cosine and sine terms.", function( assert ) { 
+    // Arrange
+    let root1 = new Root(2, 1.1);
+    let root2 = new Root(2, -1.1);
+    var position = 0;
+    var velocity = 0;
+    let solution = new ComplexRootSolution(root1, root2, position, velocity);
+    var expected = "x(t) = 0"
+    // Act
+    var actual = solution.print();
+
+    // Assert
+    assert.equal(actual, expected, "Value should be -x." ); 
+}); 
+
+QUnit.test( "Solution Tests: unit exponential term and non-zero sine and cosine terms", function( assert ) { 
+    // Arrange
+    let root1 = new Root(0, 1.1);
+    let root2 = new Root(0, -1.1);
+    var position = 3;
+    var velocity = 4;
+    let solution = new ComplexRootSolution(root1, root2, position, velocity);
+    var expected = "x(t) = 3\\cos(1.10t)+3.64\\sin(1.10t)"
+    // Act
+    var actual = solution.print();
+
+    // Assert
+    assert.equal(actual, expected, "Value should be -x." ); 
+}); 
+
+QUnit.test( "Solution Tests: Repeated Root with A and B non-zero", function( assert ) { 
+    // Arrange
+    let root = new Root(1, 0);
+    var position = 2;
+    var velocity = 4;
+    let solution = new RepeatedRootSolution(root, position, velocity);
+    var expected = "x(t) = e^{t}(2+2t)"
+    // Act
+    var actual = solution.print();
+
+    // Assert
+    assert.equal(actual, expected, "Value should be x(t) = e^{t}(2+2t)." ); 
 }); 
 
