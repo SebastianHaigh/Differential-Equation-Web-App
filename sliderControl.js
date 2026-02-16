@@ -63,7 +63,8 @@ startButton.onclick = function() {
 		roots_for_pole_plot[i] = {Re: roots[i].re(), Im: roots[i].im()};
 	}
 	poleplot(roots_for_pole_plot);
-	refreshIntervalId = ball(data_object.timeSeries);
+	updateRootDisplay(roots[0], roots[1]);
+	refreshIntervalId = ball(data_object.timeSeries.slice());
 	$("#interval3").text(refreshIntervalId);
 	state = 1;
 };
@@ -128,7 +129,7 @@ function solve_equation(data_object) {
 function updateAll(data_object) {
 	d3.selectAll("svg > *").remove();
 	data_object = solve_equation(data_object);
-	InitChart(data_object.solution.time_series(0.1, 1000));
+	InitChart(data_object.timeSeries);
 	initBall(data_object.intCon.x);
 	var roots = data_object.differential_equation.get_roots();
 	var roots_for_pole_plot = [];
@@ -141,16 +142,44 @@ function updateAll(data_object) {
 };
 
 function updateRootDisplay(root1, root2) {
-	$("#sigma1").text(root1.print());
-	$("#sigma2").text(root2.print());
+	var formattedRoot1 = "";
+	var formattedRoot2 = "";
+	if (root1 && typeof root1.print == "function") {
+		formattedRoot1 = root1.print();
+	}
+	if (root2 && typeof root2.print == "function") {
+		formattedRoot2 = root2.print();
+	}
+	$("#sigma1").text(formattedRoot1);
+	$("#sigma2").text(formattedRoot2);
 };
+
+// Render a valid initial model before periodic MathJax updates begin.
+data_object = updateAll(data_object);
 
 // Interval for updating MathJax
 setInterval(function() {
+	if (typeof MathJax == "undefined" || !MathJax.Hub) {
+		return;
+	}
+
+	if (!data_object || !data_object.differential_equation || !data_object.solution) {
+		return;
+	}
+
+	if (typeof data_object.differential_equation.print != "function" || typeof data_object.solution.print != "function") {
+		return;
+	}
 
 	var math = MathJax.Hub.getAllJax("diffEq")[0];
+	if (!math) {
+		return;
+	}
 	MathJax.Hub.Queue(["Text",math,data_object.differential_equation.print()]);
 	var math2 = MathJax.Hub.getAllJax("solEq")[0];
+	if (!math2) {
+		return;
+	}
 	MathJax.Hub.Queue(["Text",math2,data_object.solution.print()]);
 
-}, 500)
+}, 500);

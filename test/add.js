@@ -1,7 +1,6 @@
 
-
-QUnit.test('add two numbers', assert => {
-  let ts = new TimeSeries();
-  ts.push(1,3);
-  assert.equal(ts.at(0).data, 3, '1 + 1 = 2');
+QUnit.test("InitialConditions stores constructor values", function(assert) {
+  let initialConditions = new InitialConditions(1, 3);
+  assert.equal(initialConditions.position, 1, "Position should be stored.");
+  assert.equal(initialConditions.velocity, 3, "Velocity should be stored.");
 });
