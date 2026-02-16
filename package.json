@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "qunit --require ./test/setup.js"
+    "test": "qunit --require ./test/setup.js test/add.js test/components_test.js test/differential_equation_test.js"
   },
   "devDependencies": {
     "qunit": "^2.14.1",
