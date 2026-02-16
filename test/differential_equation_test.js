@@ -120,3 +120,26 @@ QUnit.test( "Solution Tests: Repeated Root with A and B non-zero", function( ass
     assert.equal(actual, expected, "Value should be x(t) = e^{t}(2+2t)." ); 
 }); 
 
+QUnit.test( "First-order equations use the root -b/a", function( assert ) {
+    // Arrange
+    let equation = new FirstOrderDifferentialEquation(2, 1);
+
+    // Act
+    let root = equation.get_roots()[0];
+
+    // Assert
+    assert.equal(root.re(), -0.5, "Root should be -b/a.");
+});
+
+QUnit.test( "pure_imaginary only true for complex roots with zero real part", function( assert ) {
+    // Arrange
+    let purelyImaginary = new Root(0, 2);
+    let realOnly = new Root(0, 0);
+    let complexWithRealPart = new Root(1, 2);
+
+    // Assert
+    assert.true(purelyImaginary.pure_imaginary(), "0 + bi should be pure imaginary.");
+    assert.false(realOnly.pure_imaginary(), "0 + 0i is not complex.");
+    assert.false(complexWithRealPart.pure_imaginary(), "a + bi (a != 0) is not pure imaginary.");
+});
+

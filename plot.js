@@ -112,6 +112,9 @@ function createBallPlotArea() {
 };
 
 function ball(data) {
+	if (!data || data.length === 0) {
+		return null;
+	}
 	
 	var ballArea = createBallPlotArea();
 	var initPosition = 600 + (data[0].x*50);
@@ -123,8 +126,18 @@ function ball(data) {
 	var interval = 10;
 	var sum = 0;
 	
-	refreshIntervalId = setInterval(function() {	  
+	var animationId = setInterval(function() {
+		if (data.length === 0) {
+			clearInterval(animationId);
+			return;
+		}
+
 		var p = data.shift();
+		if (!p) {
+			clearInterval(animationId);
+			return;
+		}
+
 		var v = (p.x*50) + 600;
 		v = Math.floor(v);
         $("#interval").text(data.length);
@@ -137,7 +150,7 @@ function ball(data) {
 			.style("fill","#CC008E")
 			.attr("r",20);
 	}, interval);
-	return refreshIntervalId;
+	return animationId;
 
 };
 

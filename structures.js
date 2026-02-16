@@ -546,7 +546,8 @@ class SecondOrderDifferentialEquation extends DifferentialEquation {
 class FirstOrderDifferentialEquation extends DifferentialEquation {
 	constructor(a, b) {
 		super([new DifferentialEquationTerm(a, 1), new DifferentialEquationTerm(b, 0)]);
-		var root_value = b/Math.abs(a);
+		// For ax'(t) + bx(t) = 0, the characteristic root is -b/a.
+		var root_value = (-b) / a;
 		this.root = new Root(root_value);
 	}
 
@@ -625,7 +626,7 @@ class Root {
 	 * @returns {boolean}
 	 */
 	pure_imaginary() {
-		return this.is_complex && this.real.is_zero();	
+		return this.is_complex() && this.real.is_zero();	
 	}
 
 	print_real(leading = true) {

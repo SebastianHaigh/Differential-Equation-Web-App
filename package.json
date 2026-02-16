@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "qunit"
+    "test": "qunit --require ./test/setup.js"
   },
   "devDependencies": {
     "qunit": "^2.14.1",
